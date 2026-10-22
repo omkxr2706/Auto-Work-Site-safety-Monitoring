@@ -5,14 +5,14 @@ from pathlib import Path
 
 import pytest
 import torch
-
-from tests import CUDA_DEVICE_COUNT, CUDA_IS_AVAILABLE, MODEL, SOURCE
 from ultralytics import YOLO
 from ultralytics.cfg import TASK2DATA, TASK2MODEL, TASKS
 from ultralytics.utils import ASSETS, IS_JETSON, WEIGHTS_DIR
 from ultralytics.utils.autodevice import GPUInfo
 from ultralytics.utils.checks import check_amp
 from ultralytics.utils.torch_utils import TORCH_1_13
+
+from tests import CUDA_DEVICE_COUNT, CUDA_IS_AVAILABLE, MODEL, SOURCE
 
 # Try to find idle devices if CUDA is available
 DEVICES = []
@@ -201,14 +201,14 @@ def test_predict_sam():
 
     # Test predictor
     predictor = SAMPredictor(
-        overrides=dict(
-            conf=0.25,
-            task="segment",
-            mode="predict",
-            imgsz=1024,
-            model=WEIGHTS_DIR / "mobile_sam.pt",
-            device=DEVICES[0],
-        )
+        overrides={
+            "conf": 0.25,
+            "task": "segment",
+            "mode": "predict",
+            "imgsz": 1024,
+            "model": WEIGHTS_DIR / "mobile_sam.pt",
+            "device": DEVICES[0],
+        }
     )
     predictor.set_image(ASSETS / "zidane.jpg")
     # predictor(bboxes=[439, 437, 524, 709])
