@@ -1,20 +1,21 @@
-import os
-import cv2
-import numpy as np
-from ultralytics import YOLO
-import torchvision.ops as ops
-import torch
-import tkinter as tk
-from tkinter import filedialog
-from PIL import Image, ImageTk
 import threading
 import time
+import tkinter as tk
+from tkinter import filedialog
+
+import cv2
+import numpy as np
+import torch
+from PIL import Image, ImageTk
+from torchvision import ops
+from ultralytics import YOLO
+
 
 # ------------------- NMS Function -------------------
 def apply_classwise_nms(boxes, scores, classes, iou_threshold=0.5):
     # boxes: Nx4 numpy, scores: N, classes: N
     if len(boxes) == 0:
-        return np.zeros((0,4)), np.zeros((0,)), np.zeros((0,))
+        return np.zeros((0, 4)), np.zeros((0,)), np.zeros((0,))
     final_boxes, final_scores, final_classes = [], [], []
     for cls in np.unique(classes):
         cls_indices = np.where(classes == cls)[0]
@@ -33,12 +34,13 @@ def apply_classwise_nms(boxes, scores, classes, iou_threshold=0.5):
         final_scores.append(cls_scores[keep].numpy())
         final_classes.append(np.full(len(keep), cls))
     if len(final_boxes) == 0:
-        return np.zeros((0,4)), np.zeros((0,)), np.zeros((0,))
+        return np.zeros((0, 4)), np.zeros((0,)), np.zeros((0,))
     return (
         np.concatenate(final_boxes, axis=0),
         np.concatenate(final_scores, axis=0),
-        np.concatenate(final_classes, axis=0)
+        np.concatenate(final_classes, axis=0),
     )
+
 
 # ------------------- Model Setup -------------------
 # Adjust these paths if your weights are at different locations
@@ -58,19 +60,19 @@ except Exception as e:
 
 FONT = cv2.FONT_HERSHEY_SIMPLEX
 
+
 # ------------------- Helper -------------------
 def is_inside(cx, cy, box):
     x1, y1, x2, y2 = box
     return x1 <= cx <= x2 and y1 <= cy <= y2
 
+
 # ------------------- Processing (single image/frame) -------------------
 def process_frame(frame_bgr):
-    """
-    Input: BGR numpy image (from cv2)
-    Returns: person_img, ppe_img, final_img, safe_img  (all BGR numpy arrays)
+    """Input: BGR numpy image (from cv2) Returns: person_img, ppe_img, final_img, safe_img (all BGR numpy arrays).
     """
     image = frame_bgr.copy()
-    h, w = image.shape[:2]
+    _h, _w = image.shape[:2]
 
     # Person detection
     try:
@@ -82,11 +84,11 @@ def process_frame(frame_bgr):
             if mask.sum() > 0:
                 person_boxes = person_result.boxes.xyxy[mask].cpu().numpy()
             else:
-                person_boxes = np.zeros((0,4))
+                person_boxes = np.zeros((0, 4))
         else:
-            person_boxes = np.zeros((0,4))
+            person_boxes = np.zeros((0, 4))
     except Exception:
-        person_boxes = np.zeros((0,4))
+        person_boxes = np.zeros((0, 4))
 
     person_img = image.copy()
     for box in person_boxes:
@@ -101,16 +103,16 @@ def process_frame(frame_bgr):
             ppe_classes_all = ppe_result.boxes.cls.cpu().numpy().astype(np.int32)
             ppe_scores_all = ppe_result.boxes.conf.cpu().numpy()
         else:
-            ppe_boxes_all = np.zeros((0,4))
+            ppe_boxes_all = np.zeros((0, 4))
             ppe_classes_all = np.zeros((0,), dtype=int)
             ppe_scores_all = np.zeros((0,))
     except Exception:
-        ppe_boxes_all = np.zeros((0,4))
+        ppe_boxes_all = np.zeros((0, 4))
         ppe_classes_all = np.zeros((0,), dtype=int)
         ppe_scores_all = np.zeros((0,))
 
     # class-wise NMS
-    ppe_boxes, ppe_scores, ppe_classes = apply_classwise_nms(ppe_boxes_all, ppe_scores_all, ppe_classes_all)
+    ppe_boxes, _ppe_scores, ppe_classes = apply_classwise_nms(ppe_boxes_all, ppe_scores_all, ppe_classes_all)
 
     ppe_img = image.copy()
     for i, box in enumerate(ppe_boxes):
@@ -144,12 +146,12 @@ def process_frame(frame_bgr):
 
         # Map colors for labels
         color_map = {
-            "H V": (0, 255, 0),     # Green
+            "H V": (0, 255, 0),  # Green
             "H NV": (0, 255, 255),  # Yellow
-            "NH V": (255, 0, 0),    # Blue
-            "NH NV": (0, 0, 255)    # Red
+            "NH V": (255, 0, 0),  # Blue
+            "NH NV": (0, 0, 255),  # Red
         }
-        color = color_map.get(label, (255,255,255))
+        color = color_map.get(label, (255, 255, 255))
 
         cv2.rectangle(final_img, (x1, y1), (x2, y2), color, 2)
         cv2.putText(final_img, label, (x1, max(20, y1 - 10)), FONT, 0.7, color, 2)
@@ -160,6 +162,7 @@ def process_frame(frame_bgr):
         cv2.putText(safe_img, safety_label, (x1, max(35, y1 - 10)), FONT, 0.7, safety_color, 2)
 
     return person_img, ppe_img, final_img, safe_img
+
 
 # ------------------- GUI Setup & Utilities -------------------
 def display_images_in_labels(images):
@@ -175,6 +178,7 @@ def display_images_in_labels(images):
         image_labels[i].config(image=img_tk)
         image_labels[i].image = img_tk
 
+
 def upload_image():
     file_path = filedialog.askopenfilename(filetypes=[("Images", "*.jpg *.png *.jpeg *.bmp")])
     if not file_path:
@@ -185,10 +189,12 @@ def upload_image():
     person_img, ppe_img, final_img, safe_img = process_frame(frame)
     display_images_in_labels([person_img, ppe_img, final_img, safe_img])
 
+
 # ------------------- Camera Thread & Controls -------------------
 camera_running = False
 camera_thread = None
 cap = None
+
 
 def camera_loop(camera_index=0, target_fps=10):
     global camera_running, cap
@@ -215,7 +221,7 @@ def camera_loop(camera_index=0, target_fps=10):
             max_dim = 800
             if max(H, W) > max_dim:
                 scale = max_dim / float(max(H, W))
-                frame = cv2.resize(frame, (int(W*scale), int(H*scale)))
+                frame = cv2.resize(frame, (int(W * scale), int(H * scale)))
 
             person_img, ppe_img, final_img, safe_img = process_frame(frame)
             # update GUI (must be done in main thread via after)
@@ -224,6 +230,7 @@ def camera_loop(camera_index=0, target_fps=10):
         if cap is not None:
             cap.release()
         root.after(0, lambda: status_var.set("Camera stopped."))
+
 
 def start_camera():
     global camera_running, camera_thread
@@ -234,33 +241,57 @@ def start_camera():
     camera_thread.start()
     status_var.set("Starting camera...")
 
+
 def stop_camera():
     global camera_running
     camera_running = False
     status_var.set("Stopping camera...")
+
 
 # ------------------- Dark Theme GUI -------------------
 root = tk.Tk()
 root.title("PPE Detection and Safety Classification (Live Camera)")
 root.configure(bg="#161616")
 
-title = tk.Label(root, text="PPE Detection and Safety Classification",
-                 bg="#161616", fg="#00ffcc", font=("Segoe UI", 18, "bold"))
+title = tk.Label(
+    root, text="PPE Detection and Safety Classification", bg="#161616", fg="#00ffcc", font=("Segoe UI", 18, "bold")
+)
 title.pack(pady=8)
 
 btn_frame = tk.Frame(root, bg="#161616")
 btn_frame.pack(pady=6)
 
-upload_btn = tk.Button(btn_frame, text="Upload Image", command=upload_image,
-                       bg="#00bfa5", fg="black", font=("Segoe UI", 11, "bold"), width=16)
+upload_btn = tk.Button(
+    btn_frame,
+    text="Upload Image",
+    command=upload_image,
+    bg="#00bfa5",
+    fg="black",
+    font=("Segoe UI", 11, "bold"),
+    width=16,
+)
 upload_btn.grid(row=0, column=0, padx=8)
 
-start_cam_btn = tk.Button(btn_frame, text="Start Camera (Live)", command=start_camera,
-                          bg="#00bfa5", fg="black", font=("Segoe UI", 11, "bold"), width=16)
+start_cam_btn = tk.Button(
+    btn_frame,
+    text="Start Camera (Live)",
+    command=start_camera,
+    bg="#00bfa5",
+    fg="black",
+    font=("Segoe UI", 11, "bold"),
+    width=16,
+)
 start_cam_btn.grid(row=0, column=1, padx=8)
 
-stop_cam_btn = tk.Button(btn_frame, text="Stop Camera", command=stop_camera,
-                         bg="#ff6b6b", fg="black", font=("Segoe UI", 11, "bold"), width=16)
+stop_cam_btn = tk.Button(
+    btn_frame,
+    text="Stop Camera",
+    command=stop_camera,
+    bg="#ff6b6b",
+    fg="black",
+    font=("Segoe UI", 11, "bold"),
+    width=16,
+)
 stop_cam_btn.grid(row=0, column=2, padx=8)
 
 # status label
@@ -273,20 +304,26 @@ frame = tk.Frame(root, bg="#161616")
 frame.pack(pady=10)
 
 image_labels = []
-captions = ["Person Detection", "PPE Detection", "Labelled Output", "Safe/Unsafe"]
+captions = ["Person Detection", "PPE Detection", "Labeled Output", "Safe/Unsafe"]
 for i in range(4):
     sub = tk.Frame(frame, bg="#1f1f1f", bd=0)
-    sub.grid(row=(i//2)*2, column=i%2, padx=12, pady=6)
+    sub.grid(row=(i // 2) * 2, column=i % 2, padx=12, pady=6)
     lbl = tk.Label(sub, bg="#1f1f1f")
     lbl.pack()
     caption = tk.Label(frame, text=captions[i], bg="#161616", fg="#00ffcc", font=("Segoe UI", 10, "bold"))
-    caption.grid(row=(i//2)*2 + 1, column=i%2, pady=(2,12))
+    caption.grid(row=(i // 2) * 2 + 1, column=i % 2, pady=(2, 12))
     image_labels.append(lbl)
 
 # footer / credits
-credit = tk.Label(root, text="Model inference: YOLO (person + PPE). Live camera mode available.",
-                  bg="#161616", fg="#8fbfb3", font=("Segoe UI", 9))
+credit = tk.Label(
+    root,
+    text="Model inference: YOLO (person + PPE). Live camera mode available.",
+    bg="#161616",
+    fg="#8fbfb3",
+    font=("Segoe UI", 9),
+)
 credit.pack(pady=8)
+
 
 # Graceful exit: ensure camera stops
 def on_closing():
@@ -294,6 +331,7 @@ def on_closing():
     camera_running = False
     time.sleep(0.1)
     root.destroy()
+
 
 root.protocol("WM_DELETE_WINDOW", on_closing)
 root.mainloop()
