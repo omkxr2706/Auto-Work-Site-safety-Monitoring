@@ -1,15 +1,13 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
 import torch
-
 from ultralytics.engine.results import Results
 from ultralytics.models.yolo.detect.predict import DetectionPredictor
 from ultralytics.utils import DEFAULT_CFG, ops
 
 
 class OBBPredictor(DetectionPredictor):
-    """
-    A class extending the DetectionPredictor class for prediction based on an Oriented Bounding Box (OBB) model.
+    """A class extending the DetectionPredictor class for prediction based on an Oriented Bounding Box (OBB) model.
 
     This predictor handles oriented bounding box detection tasks, processing images and returning results with rotated
     bounding boxes.
@@ -27,8 +25,7 @@ class OBBPredictor(DetectionPredictor):
     """
 
     def __init__(self, cfg=DEFAULT_CFG, overrides=None, _callbacks=None):
-        """
-        Initialize OBBPredictor with optional model and data configuration overrides.
+        """Initialize OBBPredictor with optional model and data configuration overrides.
 
         Args:
             cfg (dict, optional): Default configuration for the predictor.
@@ -45,12 +42,11 @@ class OBBPredictor(DetectionPredictor):
         self.args.task = "obb"
 
     def construct_result(self, pred, img, orig_img, img_path):
-        """
-        Construct the result object from the prediction.
+        """Construct the result object from the prediction.
 
         Args:
-            pred (torch.Tensor): The predicted bounding boxes, scores, and rotation angles with shape (N, 7) where
-                the last dimension contains [x, y, w, h, confidence, class_id, angle].
+            pred (torch.Tensor): The predicted bounding boxes, scores, and rotation angles with shape (N, 7) where the
+                last dimension contains [x, y, w, h, confidence, class_id, angle].
             img (torch.Tensor): The image after preprocessing with shape (B, C, H, W).
             orig_img (np.ndarray): The original image before preprocessing.
             img_path (str): The path to the original image.
