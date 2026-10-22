@@ -54,7 +54,6 @@ Queue management using [Ultralytics YOLO11](https://github.com/ultralytics/ultra
 
         ```python
         import cv2
-
         from ultralytics import solutions
 
         cap = cv2.VideoCapture("path/to/video.mp4")
@@ -133,7 +132,6 @@ Here's a minimal example:
 
 ```python
 import cv2
-
 from ultralytics import solutions
 
 cap = cv2.VideoCapture("path/to/video.mp4")
