@@ -2,7 +2,6 @@
 
 import torch
 from PIL import Image
-
 from ultralytics.models.yolo.segment import SegmentationPredictor
 from ultralytics.utils import DEFAULT_CFG, checks
 from ultralytics.utils.metrics import box_iou
@@ -12,8 +11,7 @@ from .utils import adjust_bboxes_to_image_border
 
 
 class FastSAMPredictor(SegmentationPredictor):
-    """
-    FastSAMPredictor is specialized for fast SAM (Segment Anything Model) segmentation prediction tasks.
+    """FastSAMPredictor is specialized for fast SAM (Segment Anything Model) segmentation prediction tasks.
 
     This class extends the SegmentationPredictor, customizing the prediction pipeline specifically for fast SAM. It
     adjusts post-processing steps to incorporate mask prediction and non-maximum suppression while optimizing for
@@ -32,8 +30,7 @@ class FastSAMPredictor(SegmentationPredictor):
     """
 
     def __init__(self, cfg=DEFAULT_CFG, overrides=None, _callbacks=None):
-        """
-        Initialize the FastSAMPredictor with configuration and callbacks.
+        """Initialize the FastSAMPredictor with configuration and callbacks.
 
         This initializes a predictor specialized for Fast SAM (Segment Anything Model) segmentation tasks. The predictor
         extends SegmentationPredictor with custom post-processing for mask prediction and non-maximum suppression
@@ -48,8 +45,7 @@ class FastSAMPredictor(SegmentationPredictor):
         self.prompts = {}
 
     def postprocess(self, preds, img, orig_imgs):
-        """
-        Apply postprocessing to FastSAM predictions and handle prompts.
+        """Apply postprocessing to FastSAM predictions and handle prompts.
 
         Args:
             preds (List[torch.Tensor]): Raw predictions from the model.
@@ -76,8 +72,7 @@ class FastSAMPredictor(SegmentationPredictor):
         return self.prompt(results, bboxes=bboxes, points=points, labels=labels, texts=texts)
 
     def prompt(self, results, bboxes=None, points=None, labels=None, texts=None):
-        """
-        Perform image segmentation inference based on cues like bounding boxes, points, and text prompts.
+        """Perform image segmentation inference based on cues like bounding boxes, points, and text prompts.
 
         Args:
             results (Results | List[Results]): Original inference results from FastSAM models without any prompts.
@@ -150,8 +145,7 @@ class FastSAMPredictor(SegmentationPredictor):
         return prompt_results
 
     def _clip_inference(self, images, texts):
-        """
-        Perform CLIP inference to calculate similarity between images and text prompts.
+        """Perform CLIP inference to calculate similarity between images and text prompts.
 
         Args:
             images (List[PIL.Image]): List of source images, each should be PIL.Image with RGB channel order.
